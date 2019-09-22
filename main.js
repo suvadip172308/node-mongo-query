@@ -1,10 +1,9 @@
 const Joi = require('joi');
 const express = require('express');
 const morgan = require('morgan');
-var fs = require('fs');
-var path = require('path');
-
-const {logger, authentication} = require('./logger');
+const fs = require('fs');
+const path = require('path');
+const config = require('config');
 
 const app = express();
 
@@ -14,19 +13,27 @@ let courses = [
   {id: '3', subject: 'Chemistry' }
 ];
 
-// create a write stream (in append mode)
-var accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.log'), { flags: 'a' })
+// Environment setting
+console.log(`NODE_ENV: ${process.env.NODE_ENV}`); // undefined for default environment
+console.log(`app environment: ${app.get('env')}`);
+
+// Setting configuration
+console.log(`Config Environment: ${config.get('name')}`);
+console.log(`Mail server name: ${config.get('mail.host')}`);
 
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
 
-// setup the logger
-app.use(morgan('tiny', { stream: accessLogStream }));
-
-//app.use(logger);
-//app.use(authentication);
+if (app.get('env') === 'development') {
+  // create a write stream (in append mode)
+  var accessLogStream = fs.createWriteStream(
+    path.join(__dirname, 'logs/access.log'), { flags: 'a' }
+  );
+  
+  app.use(morgan('tiny', { stream: accessLogStream }));
+}
 
 // GET all courses
 app.get('/api/courses', (req, res) => {
