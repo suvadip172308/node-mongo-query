@@ -1,3 +1,4 @@
+const Joi = require('joi');
 const express = require('express');
 const app = express();
 bodyParser = require('body-parser').json();
@@ -13,20 +14,23 @@ app.get('/api/courses', (req, res) => {
   res.send(courses);
 });
 
-//GET a specific coure
+// GET a specific coure
 app.get('/api/course/:id', (req, res) => {
   const id = req.params.id;
   const course = courses.find(course => course.id === id);
   console.log(course);
-  if(!course) {
-    res.status(400).send(`${id} is not a valid id`);
-  } else {
-    res.send(course.subject);
-  }
+  if(!course) return res.status(404).send(`${id} is not a valid id`);
+  
+  res.send(course.subject);
+  
 });
 
 // POST Add a new course
 app.post('/api/courses/', bodyParser, (req, res) => {
+  const {error} = validateSubject(req.body);
+
+  if(error) return res.status(400).send(error.details[0].message);
+
   const course = {
     id: `${courses.length + 1}`,
     subject: req.body.subject
@@ -37,29 +41,42 @@ app.post('/api/courses/', bodyParser, (req, res) => {
   res.send(lastItem);
 });
 
-//PUT Update an existing course
+// PUT Update an existing course
 app.put('/api/course/:id', bodyParser, (req, res) => {
   const id = req.params.id;
+  const {error} = validateSubject(req.body);
+  
+  if(error) return res.status(400).send(error.details[0].message);
+  
   const course = courses.find(course => course.id === id);
 
-  if(!course) {
-    res.status(400).send('Not a valid id');
-    return;
-  }
+  if(!course) return res.status(400).send('Not a valid id');
 
-  const modifiedCourse = courses.find(course => {
-    return course.id === id ? course.subject = req.body.subject : false;
-  });
+  course.subject = req.body.subject;
 
-  res.send(modifiedCourse);
+  res.send(course);
 });
 
-//DELETE a specific course
+// DELETE a specific course
 app.delete('/api/course/:id', (req,res) => {
   const id = req.params.id;
+  course = courses.find(course => course.id === id);
+  
+  if(!course) return res.status(404).send('Not a valid Id');
+  
   courses = courses.filter(course => course.id !== id);
-  res.send(courses);
+  res.send(course);
 });
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Listining at port no: ${port} ...`));
+
+
+
+function validateSubject(course) {
+  const schema = {
+    subject: Joi.string().min(3).required()
+  };
+
+  return Joi.validate(course, schema);
+}
