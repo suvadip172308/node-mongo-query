@@ -1,7 +1,12 @@
 const Joi = require('joi');
 const express = require('express');
+const morgan = require('morgan');
+var fs = require('fs');
+var path = require('path');
+
+const {logger, authentication} = require('./logger');
+
 const app = express();
-bodyParser = require('body-parser').json();
 
 let courses = [
   {id: '1', subject: 'Mathametics' },
@@ -9,7 +14,21 @@ let courses = [
   {id: '3', subject: 'Chemistry' }
 ];
 
-//GET all courses
+// create a write stream (in append mode)
+var accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs/access.log'), { flags: 'a' })
+
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
+
+// setup the logger
+app.use(morgan('tiny', { stream: accessLogStream }));
+
+//app.use(logger);
+//app.use(authentication);
+
+// GET all courses
 app.get('/api/courses', (req, res) => {
   res.send(courses);
 });
@@ -26,7 +45,7 @@ app.get('/api/course/:id', (req, res) => {
 });
 
 // POST Add a new course
-app.post('/api/courses/', bodyParser, (req, res) => {
+app.post('/api/courses/', (req, res) => {
   const {error} = validateSubject(req.body);
 
   if(error) return res.status(400).send(error.details[0].message);
@@ -42,7 +61,7 @@ app.post('/api/courses/', bodyParser, (req, res) => {
 });
 
 // PUT Update an existing course
-app.put('/api/course/:id', bodyParser, (req, res) => {
+app.put('/api/course/:id', (req, res) => {
   const id = req.params.id;
   const {error} = validateSubject(req.body);
   
