@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 const config = require('config');
+const applicationDebugger = require('debug')('app:application');
+const dbDebugger = require('debug')('app:db');
 
 const app = express();
 
@@ -33,7 +35,11 @@ if (app.get('env') === 'development') {
   );
   
   app.use(morgan('tiny', { stream: accessLogStream }));
+  applicationDebugger('Morgan enabled....');
 }
+
+//db access related logic here, then add db debugger
+dbDebugger('Db access log....');
 
 // GET all courses
 app.get('/api/courses', (req, res) => {
