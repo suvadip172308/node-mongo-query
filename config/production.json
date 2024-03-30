@@ -1,6 +1,0 @@
-{
-  "name": "Production - Envoronment",
-  "mail": {
-    "host": "production-mail-server"
-  }
-}
